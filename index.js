@@ -1,3 +1,3 @@
-// run `node index.js` in the terminal
+const b = require('./lib/b');
 
-console.log(`Hello Node.js v${process.versions.node}!`);
+console.log(b`node --version`);

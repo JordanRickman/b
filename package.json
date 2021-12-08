@@ -6,5 +6,8 @@
   },
   "devDependencies": {
     "jest": "^27.4.3"
+  },
+  "dependencies": {
+    "cross-spawn": "^7.0.3"
   }
 }
