@@ -1,0 +1,10 @@
+{
+  "name": "b-js",
+  "version": "0.0.1",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^27.4.3"
+  }
+}
