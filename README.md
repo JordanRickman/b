@@ -87,6 +87,44 @@ await parallelTask.waitAll()
 
 You'll also be able to use `b.bg` to start a command that will keep running after your JS code exits.
 
+Return Signature
+---
+`b`'s Promises resolve with an object that's identical to the return value of `child_process.spawnSync()`, except that it converts the I/O from Buffers into Strings. The specific structure is
+```typescript
+{
+  pid: number; // PID of the child process
+  output: [string, string, string]; // [stdin, stdout, stderr]
+  stdout: string; // Identical to output[1]
+  stderr: string; // Identical to output[2]
+  status: number | null; // Exit code, or null if the process was terminated by a signal
+  signal: string | null; // If it was terminated by a signal, the signal used to terminate the process
+  error: Error; // The error object if the child process failed or timed out
+}
+```
+
+Exception Handling
+---
+Also, unlike `spawnSync()` and other `child_process` APIs, which just set the `error` attribute, `b.js` raises an exception when a process fails to spawn.
+
+By default, `b` also raises an exception if a shell command produces a non-zero exit code. This can be relaxed with `b.mayfail`.
+
+When trying to catch these, keep in mind they will come in as Promise rejections; a call to `b` will not itself throw any of these.
+
+Template Parsing
+---
+
+Config
+---
+**TODO**
+```javascript
+b.set({ ... })
+b({ ... })`cmd with settings`
+```
+
+### Options
+* **env**
+* **cd**
+* **mayfail**
 
 why the name?
 ---
