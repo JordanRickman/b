@@ -104,7 +104,7 @@ Return Signature
 
 Exception Handling
 ---
-Also, unlike `spawnSync()` and other `child_process` APIs, which just set the `error` attribute, `b.js` raises an exception when a process fails to spawn.
+Also, unlike `spawnSync()` and other `child_process` APIs, which just set the `error` attribute, **b.js** raises an exception when a process fails to spawn.
 
 By default, `b` also raises an exception if a shell command produces a non-zero exit code. This can be relaxed with `b.mayfail`.
 
@@ -112,6 +112,39 @@ When trying to catch these, keep in mind they will come in as Promise rejections
 
 Template Parsing
 ---
+`b` applies some smart processing to your template literals. To see all the possibilities, look in `test/b.test.js`, at the test cases for the `_interpolate` function. Some highlights include:
+
+* Strings are wrapped in double quotes.
+```javascript
+b`cat ${'My File Name.txt'}` // cat "My File Name.txt"
+```
+
+* Use `b.raw` to not quote strings.
+```javascript
+b`cp ${b.raw('../source ./destination')}` // cp ../source ./destination
+b`ls /path/to/${b.raw('directory')}` // ls /path/to/directory
+```
+
+* Arrays are converted to space-separated lists.
+```javascript
+b`git add ${['file1', 'file 2', 'file3']}` // git add "file1" "file 2" "file3"
+```
+
+* Null and undefined are ignored.
+```javascript
+b`echo Hello ${undefined}World` // echo Hello World
+b`git add ${['file1', null, 'file 2']}` // git add "file1" "file 2"
+```
+
+* Functions are executed before running the command, but _after_ previous commands have finished. Async functions can be used.
+```javascript
+b`doSomething > tempfile`
+b`echo file contents: ${() => readFileSync('tempfile')}`
+
+b`uploadDocument --id=${docId} myDocument.json`
+b`echo uploaded contents: ${async () => docServer.get('/document/'+docId)}`
+```
+
 
 Config
 ---
