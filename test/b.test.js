@@ -36,4 +36,7 @@ describe('_interpolate', () => {
       "cmd 'Dont let Bash sub this $VARIABLE'"
     )
   })
+  it('ignores null and undefined', () => {
+    expect(_interpolate`cmd ${null} ${undefined}`).toEqual('cmd  ')
+  })
 });
