@@ -117,14 +117,23 @@ Config
 ---
 **TODO**
 ```javascript
+// Set global flags
 b.set({ ... })
+
+// Set for one command
 b({ ... })`cmd with settings`
+
+// All options are also available as functions
+b.env({ ... })
+b.cd('path/to/dir')
+b.mayfail()
 ```
 
 ### Options
 * **env**
 * **cd**
 * **mayfail**
+
 
 why the name?
 ---
