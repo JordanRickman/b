@@ -1,6 +1,7 @@
 {
   "name": "b-js",
   "version": "0.0.1",
+  "entryPoint": "index.js",
   "scripts": {
     "test": "jest"
   },
