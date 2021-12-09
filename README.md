@@ -133,6 +133,7 @@ b.mayfail()
 * **env**
 * **cd**
 * **mayfail**
+* **timeout**
 
 
 why the name?
