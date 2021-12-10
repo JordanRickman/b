@@ -1,14 +1,15 @@
 b.js
 ===
 
-**b.js** is a DSL for calling shell commands in Node, empowered by the new [tagged template literal](https://wesbos.com/tagged-template-literals) syntax. Instead of writing lots of calls to `spawnSync()`, you can just write
+**b.js** is a DSL for calling shell commands from Node, powered by the [tagged template literal](https://wesbos.com/tagged-template-literals) syntax. Instead of writing lots of calls to `spawnSync()`, you can just write
 
 ```javascript
 const runTestSuite = (env, noCoverage) => {
   b`npm install`
   b`docker-compose up -d test_services`
-  b`npm run start_test_database --env=${env}`
+  b`./scripts/start_test_database --env=${env}`
   b`jest ${noCoverage ?? '--coverage=false'}`
+  b`./scripts/stop_test_database`
   if (!noCoverage) {
     b`./upload_coverage.sh`
   }
@@ -16,18 +17,19 @@ const runTestSuite = (env, noCoverage) => {
 ```
 `b` gives you all the expressive power of Bash one-liners, right in your JavaScript code!
 
+
 Async, but Sequential
 ---
-**b.js** wouldn't be much fun if you had to write this
+**b** wouldn't be much fun if you had to write this:
 ```javascript
 await b`my first command`
 await b`a second command`
 await b`the third, all in order`
 ```
 
-However, if we used `spawnSync` under the hood, there'd be lots of fancy things we couldn't do. Such as, we couldn't echo child process **stdout**/**stderr**, while *also* capturing it for you to save to a variable.
+However, if we used `child_process.spawnSync` under the hood, there'd be lots of fancy things we couldn't do. Such as, we couldn't echo child process **stdout**/**stderr**, while *also* capturing it for you to save to a variable.
 
-**b.js** chooses a hybrid approach. Each `b` tag returns a Promise, and if you want access to command results, you have to `await` that promise (or use `then()`).
+**b** chooses a hybrid approach. Each `b` tag returns a Promise, and if you want access to command results, you have to `await` that promise (or use `then()`).
 ```javascript
 const { status, stdout } = await b`ls -la`
 if (status === 0) {
@@ -37,16 +39,16 @@ if (status === 0) {
 }
 ```
 
-However, `b` secretly chains all of those Promises together, such that one command won't start until the previous one finishes. So for most purposes, you can still treat `b` calls as sequential.
+However, `b` secretly chains all those Promises together, such that one command won't start until the previous one finishes. So for most purposes, you can still treat `b` calls as sequential.
 
 Just remember to wait for them all to finish before you do anything that depends on their side effects.
 ```javascript
 b`unzip big_archive.zip big_archive`
 const text = readFileSync('big_archive/data.txt') // Oops!
-                                                    // The file isn't there yet.
+                                                  // The file isn't there yet.
 ```
 
-You can just `await` your last `b` command; it will happen after the others.
+You can just `await` your last `b` command; it will happen after the ones before it.
 ```javascript
 b`cp a.zip b.zip`
 b`unzip b.zip c/`
@@ -56,8 +58,8 @@ const matches = readFileSync('matched.txt', 'utf8')
 
 Or, you can use `b.waitAll()`, whose promise resolves once `b`'s queue has finished.
 
-### Planned Features
-In the future, you'll be able to do things in parallel instead of sequentially with `b.fork`, which "forks" off a new queue of `b` commands.
+### Parallelization
+If you need to, you can run things in parallel instead of sequentially with `b.fork`, which "forks" off a new queue of `b` commands.
 
 ```javascript
 // command 3 will wait for command 1, but not for command 2
@@ -65,31 +67,42 @@ b`command 1`
 b.fork`command 2`
 b`command 3`
 
-// Save a separate `b` instance, whose shell commands will run
+// Save a forked `b` instance, whose shell commands will run
 // in sequence with themselves, but parallel to the main instance
 // (or to other forked instances).
 const b2 = b.fork()
 b2`command a`
 b2`command b`
 b2`command c`
-await b2.waitAll() // wait for this queue to finish
+await b2.waitAll() // wait for b2's queue to finish
 
-// Or, pass it a sequence of commands to run in a parallel "thread"
+// Or, you can pass fork() a sequence of commands to run in a parallel "thread"
 const parallelTask = b.fork((b_) => {
   b_`command theFirst`
   b_`command theSecond`
   b_`command theThird`
 })
+
 // It returns a new `b` object, just like `fork()` does.
 parallelTask`command oneMoreThingAtTheEnd`
 await parallelTask.waitAll()
 ```
 
-You'll also be able to use `b.bg` to start a command that will keep running after your JS code exits.
+You can also use `b.bg` to start a command that will keep running after your JS code exits.
+
+
+Exception Handling
+---
+Also, unlike `spawnSync()` and other `child_process` APIs, which just set the `error` attribute, **b** raises an exception when a process fails to spawn.
+
+By default, **b** also raises an exception if a shell command produces a non-zero exit code. This can be relaxed with `b.mayfail`.
+
+When trying to catch these, keep in mind they will come in as Promise rejections; a call to `b` will not itself throw any of these.
+
 
 Return Signature
 ---
-`b`'s Promise resolves with an object that's identical to the return value of `child_process.spawnSync()`, except that it converts the I/O from Buffers into Strings. The specific structure is
+`b`'s Promise resolves with the same object structure as that returned by `child_process.spawnSync()`, except that it converts the I/O from Buffers into Strings. The specific type signature is
 ```typescript
 {
   pid: number; // PID of the child process
@@ -102,13 +115,6 @@ Return Signature
 }
 ```
 
-Exception Handling
----
-Also, unlike `spawnSync()` and other `child_process` APIs, which just set the `error` attribute, **b.js** raises an exception when a process fails to spawn.
-
-By default, `b` also raises an exception if a shell command produces a non-zero exit code. This can be relaxed with `b.mayfail`.
-
-When trying to catch these, keep in mind they will come in as Promise rejections; a call to `b` will not itself throw any of these.
 
 Template Parsing
 ---
@@ -119,7 +125,7 @@ Template Parsing
 b`cat ${'My File Name.txt'}` // > cat "My File Name.txt"
 ```
 
-* Use `b.raw` to not quote strings.
+* Use `b.raw` to avoid quoting strings.
 ```javascript
 b`cp ${b.raw('../source ./destination')}` // > cp ../source ./destination
 b`ls /path/to/${b.raw('directory')}` // > ls /path/to/directory
@@ -152,35 +158,104 @@ b`echo uploaded contents: ${async () => docServer.get('/document/'+docId)}`
 ```
 
 
-Config
+Stdio
 ---
-**TODO**
+Because **b** was written to help with scripting / automation, it prints stdout and stderr by default, piping them to the stdout/stderr of the parent process. It also pipes the parent process stdin to the child stdin, allowing you to run interactive commands.
+
+You can override this behavior with `b.quiet` and `b.silent`
 ```javascript
-// Set global flags
-b.set({ ... })
-
-// Set for one command
-b({ ... })`cmd with settings`
-
-// All options are also available as functions
-b.env({ ... })
-b.cd('path/to/dir')
-b.mayfail()
+b.quiet`cat averylongfile.txt` // stdout is ignored
+b.silent`echo "Don't show this error" >&2` // stdout AND stderr are ignored
 ```
 
-### Options
-* **env**
-* **cd**
-* **mayfail**
-* **timeout**
 
-When Not to Use **b**
+Options
 ---
-I am not a systems programmer
+You can configure **b** behavior with various options. All options can be set in a few different ways.
+```javascript
+// Apply one option to a single command
+b.optionName('value')`command ${template} as normal`
+b.optionName`command` // for a boolean option
 
-I have made only minimal effort to support non-Unix systems. You can try it, but... good luck.
+// Apply multiple options to a single command
+b.with({ optionA: true, optionB: 'value', optionC: true })
+// ... or chain them, fluent-style
+b.optionA.optionB('value').optionC`command`
+
+// Set options globally
+b.set({ optionA: true, optionB: 'value', optionC: true })
+
+// Since you can chain them, you can also save instances
+const silentB = b.with({ silent: true })
+silentB`command 1`
+silentB`command 2`
+silentB`command 3`
+
+// Note that unlike fork(), these will still run in the same sequence
+// (or, in the sequence of a forked `b` instance they were made from).
+
+// Finally, you can pass a function to with(), which will receive a
+// configured `b` instance.
+b.with({ optionA: true, optionB: 'value' }, b_ => {
+  b_`command 1`
+  b_`command 2`
+  b_`command 3`
+})
+
+// b.with({ ... }).fork(<function>) can be a useful combination.
+```
+
+### Set current working directory
+```javascript
+b.cd('/path/to/directory')`command string`
+b.with({ cd: '/path/to/directory' })`command string`
+```
+
+### Set environment variables
+```javascript
+b.env({ VARIABLE_NAME: 'value' })`command string`
+b.with({ env: { VARIABLE_NAME: 'value' }})`command string`
+```
+
+### Don't raise an exception on failure
+Default behavior is to raise an exception (Promise rejection) either on a non-zero exit code, or if the child process is terminated by a signal (e.g. Ctrl-C / SIGTERM). Setting this flag to true disables both cases. Errors will still be raised in the child process fails to start.
+
+```javascript
+b.mayfail`command string`
+b.with({ mayfail: true })`command string`
+```
+
+### Run a process in the background
+Process is fully detached, and will keep running after your JS code quits. We capture no process information apart from PID, and the returned Promise will resolve immediately.
+```javascript
+b.bg`long-running command`
+b.with({ bg: true })`long-running command`
+```
+
+### Set user or group of the child process
+```javascript
+b.user('username')`command string`
+b.group('groupname')`command string`
+b.uid(n)`command string`
+b.gid(n)`command string`
+```
+
+### Timeout process after _n_ milliseconds
+```javascript
+b.timeout(n)`command string`
+b.with({ timeout: n })`command string`
+```
+
+
+When _not_ to Use **b**
+---
+I hope primarily to give you a new possibility for flexible, JavaScript-based task automation.
+
+I am not a systems programmer, or an inter-process communication expert. You shouldn't use **b** to manage subprocesses in production code, and you probably shouldn't use it in things like production build chains, where you need a guarantee that certain commands were run with certain exact arguments.
+
+Also, I have made only minimal effort to support non-Unix systems. You're welcome to try it on Windows, but... good luck.
 
 
 why the name?
 ---
-a single-letter tag to keep it short. `b` as in Bash, a good mnemonic.
+A single-letter tag to keep it short. `b` as in Bash, a good mnemonic for what it does with your string templates.

@@ -50,4 +50,16 @@ describe('startCmd', () => {
     expect(error).toBeDefined()
     expect(error.code).toBe('ENOENT')
   })
+  it('resolves immediately if the process is spawned detached', async () => {
+    let finished = false
+    cmd = startCmd('sleep 1', { detached: true }).then(() => { finished = true })
+    setTimeout(() => expect(finished).toBe(true))
+  })
+  // Skip test: works interactively but I can't do it via process.stdin
+  it.skip('pipes stdin to the child process', async () => {
+    cmd = startCmd('read x ; echo $x')
+    setTimeout(() => process.stdin.write('yes'), 100)
+    const { stdout } = await cmd
+    expect(stdout).toBe('yes')
+  })
 })
