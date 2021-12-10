@@ -1,7 +1,7 @@
-const { startCommand } = require('../lib/cmd')
+const { startCmd } = require('../lib/cmd')
 
 
-describe('startCommand', () => {
+describe('startCmd', () => {
   let cmd
   afterEach(() => {
     // Try to prevent "a worker thread has failed to exit gracefully"
@@ -10,31 +10,31 @@ describe('startCommand', () => {
     }
   })
   it('returns a Promise', () => {
-    cmd = startCommand('echo > /dev/null')
+    cmd = startCmd('echo > /dev/null')
     expect(cmd).toBeInstanceOf(Promise)
   })
   it('captures the status code in the "status" attribute', async () => {
-    cmd = startCommand('exit 123')
+    cmd = startCmd('exit 123')
     const { status } = await cmd
     expect(status).toEqual(123)
   })
   it('captures the process id in the "pid" attribute', async () => {
-    cmd = startCommand('echo > /dev/null')
+    cmd = startCmd('echo > /dev/null')
     const { pid } = await cmd
     expect(typeof pid).toBe('number')
   })
   it('captures the stdout as a string', async () => {
-    cmd = startCommand('echo "Hello, world!"')
+    cmd = startCmd('echo "Hello, world!"')
     const { stdout } = await cmd
     expect(stdout).toBe('Hello, world!\n')
   })
   it('captures the stderr as a string', async () => {
-    cmd = startCommand('echo "Hello, world!" >&2')
+    cmd = startCmd('echo "Hello, world!" >&2')
     const { stderr } = await cmd
     expect(stderr).toBe('Hello, world!\n')
   })
   it('captures the termination signal if terminated', async () => {
-    cmd = startCommand('sleep 1')
+    cmd = startCmd('sleep 1')
     setTimeout(() => { 
       process.kill(cmd.childProcess.pid, 'SIGTERM')
     }, 50)
@@ -43,7 +43,7 @@ describe('startCommand', () => {
   })
   it('captures the error object if the spawn() failed', async () => {
     // extra options are sent to spawn()
-    cmd = startCommand('./nosuchfile', { shell: false })
+    cmd = startCmd('./nosuchfile', { shell: false })
     const { error } = await cmd
     // child_process errors are not always the same Error class, idk why
     // expect(error).toBeInstanceOf(Error)

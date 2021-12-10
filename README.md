@@ -168,6 +168,12 @@ b.mayfail()
 * **mayfail**
 * **timeout**
 
+When Not to Use **b**
+---
+I am not a systems programmer
+
+I have made only minimal effort to support non-Unix systems. You can try it, but... good luck.
+
 
 why the name?
 ---
