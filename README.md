@@ -89,7 +89,7 @@ You'll also be able to use `b.bg` to start a command that will keep running afte
 
 Return Signature
 ---
-`b`'s Promises resolve with an object that's identical to the return value of `child_process.spawnSync()`, except that it converts the I/O from Buffers into Strings. The specific structure is
+`b`'s Promise resolves with an object that's identical to the return value of `child_process.spawnSync()`, except that it converts the I/O from Buffers into Strings. The specific structure is
 ```typescript
 {
   pid: number; // PID of the child process
