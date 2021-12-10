@@ -1,25 +1,23 @@
-const spawn = require('cross-spawn');
-const { PassThrough } = require('stream');
 
-let s = ''
-new Promise((resolve, reject) => {
-  const ls = spawn('npm install', [], { shell: true })
-  const a = PassThrough();
-  const b = PassThrough();
-  ls.stdout.pipe(a)
-  ls.stdout.pipe(b)
+const queue = []
 
-  a.on('data', data => s += String(data))
-  b.pipe(process.stdout)
-  ls.on('exit', code => {
-    if (typeof code === 'string') {
-      // Terminated by signal
-      reject(`subprocess Terminated by ${code}`);
-    } else {
-      console.log(`subprocess exited with code ${code}`);
-      resolve(code)
-    }
+queue.push(async () => {
+  console.log('Task 1 started')
+  return (async () => {
+    console.log('Task 1 running')
+  })().then(() => {
+    console.log('Task 1 finished.')
+    queue.pop()()
   })
-}).then(() => {
-  console.log(`s=\n${s}`);
 })
+queue.push(async () => {
+  console.log('Task 2 started')
+  return (async () => {
+    console.log('Task 2 running')
+  })().then(() => {
+    console.log('Task 2 finished')
+  })
+})
+ 
+queue[0]()
+

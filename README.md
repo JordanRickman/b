@@ -14,11 +14,11 @@ const runTestSuite = (env, noCoverage) => {
   }
 }
 ```
-`b.js` gives you all the expressive power of Bash one-liners, right in your JS code!
+`b` gives you all the expressive power of Bash one-liners, right in your JavaScript code!
 
 Async, but Sequential
 ---
-`b.js` wouldn't be much fun if you had to write this
+**b.js** wouldn't be much fun if you had to write this
 ```javascript
 await b`my first command`
 await b`a second command`
@@ -27,7 +27,7 @@ await b`the third, all in order`
 
 However, if we used `spawnSync` under the hood, there'd be lots of fancy things we couldn't do. Such as, we couldn't echo child process **stdout**/**stderr**, while *also* capturing it for you to save to a variable.
 
-`b.js` chooses a hybrid approach. Each `b` tag actually returns a Promise, and if you want access to command results, you have to `await` it.
+**b.js** chooses a hybrid approach. Each `b` tag returns a Promise, and if you want access to command results, you have to `await` that promise (or use `then()`).
 ```javascript
 const { status, stdout } = await b`ls -la`
 if (status === 0) {
@@ -41,8 +41,8 @@ However, `b` secretly chains all of those Promises together, such that one comma
 
 Just remember to wait for them all to finish before you do anything that depends on their side effects.
 ```javascript
-b`unzip big_archive.zip`
-const text = readFileSync('big_archive/corpus.txt') // Oops!
+b`unzip big_archive.zip big_archive`
+const text = readFileSync('big_archive/data.txt') // Oops!
                                                     // The file isn't there yet.
 ```
 
@@ -50,7 +50,7 @@ You can just `await` your last `b` command; it will happen after the others.
 ```javascript
 b`cp a.zip b.zip`
 b`unzip b.zip c/`
-await b`cat c/corpus.txt | grep ${searchText} > matched.txt`
+await b`cat c/data.txt | grep ${searchText} > matched.txt`
 const matches = readFileSync('matched.txt', 'utf8')
 ```
 
@@ -116,24 +116,30 @@ Template Parsing
 
 * Strings are wrapped in double quotes.
 ```javascript
-b`cat ${'My File Name.txt'}` // cat "My File Name.txt"
+b`cat ${'My File Name.txt'}` // > cat "My File Name.txt"
 ```
 
 * Use `b.raw` to not quote strings.
 ```javascript
-b`cp ${b.raw('../source ./destination')}` // cp ../source ./destination
-b`ls /path/to/${b.raw('directory')}` // ls /path/to/directory
+b`cp ${b.raw('../source ./destination')}` // > cp ../source ./destination
+b`ls /path/to/${b.raw('directory')}` // > ls /path/to/directory
+```
+
+* Use `b.squote` to single quote / (aka "strong quote") strings
+```javascript
+b`echo ${b.squote('these variables are $not $read by Bash')}`
+// > echo 'these variables are $not $read by Bash'
 ```
 
 * Arrays are converted to space-separated lists.
 ```javascript
-b`git add ${['file1', 'file 2', 'file3']}` // git add "file1" "file 2" "file3"
+b`git add ${['file1', 'file 2', 'file3']}` // > git add "file1" "file 2" "file3"
 ```
 
 * Null and undefined are ignored.
 ```javascript
-b`echo Hello ${undefined}World` // echo Hello World
-b`git add ${['file1', null, 'file 2']}` // git add "file1" "file 2"
+b`echo Hello ${undefined}World` // > echo Hello World
+b`git add ${['file1', null, 'file 2']}` // > git add "file1" "file 2"
 ```
 
 * Functions are executed before running the command, but _after_ previous commands have finished. Async functions can be used.
