@@ -1,13 +1,9 @@
 const b = require('./lib/b');
-const { startCommand } = require('./lib/cmd');
 
-const p = startCommand('./nosuchfile', { shell: false })
-p.then(console.log)
-// p.then(console.log).catch(data => {
-//   console.log(data)
-//   process.exit()
-// })
-// const { pid } = p.childProcess
-// setTimeout(() => {
-//   process.kill(pid, 'SIGTERM')
-// }, 100)
+(async () => {
+  b`sleep 1; echo 'Hello, world' > FILE1`
+  b`cat FILE1 > FILE2`
+  console.log(`File contents: ${(await b`cat FILE2`).stdout}`)
+  b`rm FILE1`
+  b`rm FILE2`
+})()
