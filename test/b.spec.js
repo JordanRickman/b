@@ -1,5 +1,65 @@
-const b = require('../lib/b');
-const { _interpolate } = b;
+const b = require('../lib/b')
+const { _interpolate } = b
+const { runCommandWithOpts } = require('../lib/cmd')
+
+jest.mock('../lib/cmd')
+
+
+describe('b', () => {
+  beforeEach(() => {
+    b.config({ globalOpt1: 'one', globalOpt2: 'two' })
+  })
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+  afterAll(() => {
+    b.config({})
+  })
+  it('uses the global opts', async () => {
+    await b`command string`
+    expect(runCommandWithOpts).toHaveBeenCalledWith(
+      { env: {}, globalOpt1: 'one', globalOpt2: 'two' },
+      'command string'
+    )
+  })
+})
+
+describe('b.with', () => {
+  beforeEach(() => {
+    b.config({ globalOpt1: 'one', globalOpt2: 'two' })
+  })
+  afterEach(() => {
+    jest.resetAllMocks()
+  })
+  afterAll(() => {
+    b.config({})
+  })
+  it('uses the global opts when no opts given', async () => {
+    await b.with({})`command string`
+    expect(runCommandWithOpts).toHaveBeenCalledWith(
+      { env: {}, globalOpt1: 'one', globalOpt2: 'two' },
+      'command string'
+    )
+  })
+  it('merges passed opts with the global opts', async () => {
+    await b.with({ localOpt: 'local' })`command string`
+    expect(runCommandWithOpts).toHaveBeenCalledWith(
+      { env: {}, globalOpt1: 'one', globalOpt2: 'two', localOpt: 'local' },
+      'command string'
+    )
+  })
+  it('can be chained, and keeps merging parent -> child', async () => {
+    await b.with({ localOpt1: 'local1' })
+           .with({ localOpt2: 'local2' })`command string`
+    expect(runCommandWithOpts).toHaveBeenCalledWith(
+      { env: {},
+        globalOpt1: 'one', globalOpt2: 'two',
+        localOpt1: 'local1', localOpt2: 'local2'
+      },
+      'command string'
+    )
+  })
+})
 
 describe('_interpolate', () => {
   it('no interpolations', () => {
@@ -39,4 +99,4 @@ describe('_interpolate', () => {
   it('ignores null and undefined', () => {
     expect(_interpolate`cmd ${null} ${undefined}`).toEqual('cmd  ')
   })
-});
+})
