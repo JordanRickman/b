@@ -1,4 +1,4 @@
-const { queueTask } = require('../lib/queue');
+const { chainTask } = require('../lib/queue');
 
 
 const makeTasks = n => {
@@ -16,12 +16,12 @@ const makeTasks = n => {
 const queueTasksInSequence = taskArray => {
   const taskPromiseArray = new Array(taskArray.length).fill(null);
   taskArray.forEach((task, i) => {
-    taskPromiseArray[i] = queueTask(taskPromiseArray[i-1], task)
+    taskPromiseArray[i] = chainTask(taskPromiseArray[i-1], task)
   })
   return taskPromiseArray;
 }
 
-describe('queueTask', () => {
+describe('chainTask', () => {
   it('run tasks asynchronously in sequence', async () => {
     const [taskArray, taskHappenedArray] = makeTasks(3)
     const taskPromiseArray = queueTasksInSequence(taskArray)
@@ -45,5 +45,24 @@ describe('queueTask', () => {
     taskPromiseArray.map(async (taskPromise, i) => {
       expect(await taskPromise).toBe(`Result ${i}`);
     })
+  })
+  it('rejects all subsequent promises if one task fails', async () => {
+    const [taskArray, taskHappenedArray] = makeTasks(3)
+    taskArray.unshift(() => { throw new Error('Error 0') })
+    const taskPromiseArray = queueTasksInSequence(taskArray)
+    taskPromiseArray.forEach(async p => {
+      await expect(p).rejects.toThrow('Error 0')
+    })
+  })
+  it('does not run later tasks if one task fails', async () => {
+    const [taskArray, taskHappenedArray] = makeTasks(3)
+    taskArray.unshift(() => { throw new Error('Error 0') })
+    const taskPromiseArray = queueTasksInSequence(taskArray)
+    try {
+      await taskPromiseArray[taskPromiseArray.length - 1]
+    } catch (error) {
+      // We expect an error.
+    }
+    expect(taskHappenedArray).toEqual([null, null, null])
   })
 })

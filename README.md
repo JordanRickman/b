@@ -183,7 +183,7 @@ b.with({ optionA: true, optionB: 'value', optionC: true })
 b.optionA.optionB('value').optionC`command`
 
 // Set options globally
-b.set({ optionA: true, optionB: 'value', optionC: true })
+b.config({ optionA: true, optionB: 'value', optionC: true })
 
 // Since you can chain them, you can also save instances
 const silentB = b.with({ silent: true })
@@ -218,19 +218,26 @@ b.with({ env: { VARIABLE_NAME: 'value' }})`command string`
 ```
 
 ### Don't raise an exception on failure
-Default behavior is to raise an exception (Promise rejection) either on a non-zero exit code, or if the child process is terminated by a signal (e.g. Ctrl-C / SIGTERM). Setting this flag to true disables both cases. Errors will still be raised in the child process fails to start.
-
 ```javascript
 b.mayfail`command string`
 b.with({ mayfail: true })`command string`
 ```
+Default behavior is to raise an exception (Promise rejection) either on a non-zero exit code, or if the child process is terminated by a signal (e.g. Ctrl-C / SIGTERM). Setting this flag to true disables both cases. Errors will still be raised if the child process fails to start.
+
+### Suppress command output
+```javascript
+b.quiet`command string` // Don't echo stdout
+b.silent`command string` // Don't echo stderr OR stdout
+b.with({ quiet: true, silent: true })
+```
+Default behavior is to pipe `stdout` and `stderr` from the child process to the parent process, meaning the parent will emit these as the child does (and on the same channels). These flags prevent that. You can still access the `stdout` and `stderr` attributes in the Promise result.
 
 ### Run a process in the background
-Process is fully detached, and will keep running after your JS code quits. We capture no process information apart from PID, and the returned Promise will resolve immediately.
 ```javascript
 b.bg`long-running command`
 b.with({ bg: true })`long-running command`
 ```
+The process will be fully detached, and will keep running after your JS code quits. We capture no process information apart from PID, and the returned Promise will resolve immediately.
 
 ### Set user or group of the child process
 ```javascript
@@ -245,6 +252,7 @@ b.gid(n)`command string`
 b.timeout(n)`command string`
 b.with({ timeout: n })`command string`
 ```
+After the timeout, we attempt to kill the process using `SIGTERM`. This may not work (the process may catch it).
 
 
 When _not_ to Use **b**
