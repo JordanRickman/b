@@ -27,7 +27,7 @@ await b`a second command`
 await b`the third, all in order`
 ```
 
-However, if we used `child_process.spawnSync` under the hood, there'd be lots of fancy things we couldn't do. Such as, we couldn't echo child process **stdout**/**stderr**, while *also* capturing it for you to save to a variable.
+However, if we used `child_process.spawnSync`, there'd be lots of fancy things we couldn't do. Such as, we couldn't echo child process `stdout`/`stderr`, while *also* capturing it for you to save to a variable.
 
 **b** chooses a hybrid approach. Each `b` tag returns a Promise, and if you want access to command results, you have to `await` that promise (or use `then()`).
 ```javascript
@@ -97,7 +97,7 @@ Also, unlike `spawnSync()` and other `child_process` APIs, which just set the `e
 
 By default, **b** also raises an exception if a shell command produces a non-zero exit code. This can be relaxed with `b.mayfail`.
 
-When trying to catch these, keep in mind they will come in as Promise rejections; a call to `b` will not itself throw any of these.
+When trying to catch these, keep in mind they will come in as Promise rejections; a call to `b` will not itself throw any of these (unless `await`ed).
 
 
 Return Signature
@@ -185,7 +185,7 @@ b.optionA.optionB('value').optionC`command`
 // Set options globally
 b.config({ optionA: true, optionB: 'value', optionC: true })
 
-// Since you can chain them, you can also save instances
+// Because you can chain options, you can also save configured instances.
 const silentB = b.with({ silent: true })
 silentB`command 1`
 silentB`command 2`
@@ -222,7 +222,7 @@ b.with({ env: { VARIABLE_NAME: 'value' }})`command string`
 b.mayfail`command string`
 b.with({ mayfail: true })`command string`
 ```
-Default behavior is to raise an exception (Promise rejection) either on a non-zero exit code, or if the child process is terminated by a signal (e.g. Ctrl-C / SIGTERM). Setting this flag to true disables both cases. Errors will still be raised if the child process fails to start.
+Default behavior is to raise an exception (Promise rejection) either on a non-zero exit code, or if the child process is terminated by a signal (e.g. Ctrl-C / `SIGINT`). Setting this flag to true disables both cases. Errors will still be raised if the child process fails to start.
 
 ### Suppress command output
 ```javascript
@@ -263,7 +263,10 @@ I am not a systems programmer, or an inter-process communication expert. You sho
 
 Also, I have made only minimal effort to support non-Unix systems. You're welcome to try it on Windows, but... good luck.
 
+### Security
 
-why the name?
+**b** is a shell command runner. Strings passed into `b` can do anything. Don't pass user input into `b`. Ever.
+
+Why the name?
 ---
 A single-letter tag to keep it short. `b` as in Bash, a good mnemonic for what it does with your string templates.
