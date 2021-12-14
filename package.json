@@ -12,5 +12,6 @@
   "dependencies": {
     "cross-spawn": "^7.0.3",
     "userid": "^1.2.5"
-  }
+  },
+  "license": "MIT"
 }
