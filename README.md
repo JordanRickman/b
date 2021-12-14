@@ -1,7 +1,7 @@
 b.js
 ===
 
-**b.js** is a DSL for calling shell commands from Node, powered by the [tagged template literal](https://wesbos.com/tagged-template-literals) syntax. Instead of writing lots of calls to `spawnSync()`, you can just write
+**b** is a DSL for calling shell commands from Node, powered by the [tagged template literal](https://wesbos.com/tagged-template-literals) syntax. Instead of writing lots of calls to `spawnSync()`, you can just write
 
 ```javascript
 const runTestSuite = (env, noCoverage) => {
