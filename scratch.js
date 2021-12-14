@@ -1,63 +1,37 @@
-// const { startCmd: b } = require('./lib/cmd')
-// b('read -p "yeah?" x ; echo $x')
+const { Queue } = require('./lib/queue')
 
-const queue = null
-
-const _queue = (n, rejects = false) => {
-  return (queue || Promise.resolve()).then(() => {
-    return new Promise((resolve, reject) =>
-      setImmediate(() => {
-        console.log(`Running task ${n}`)
+const makeTask = (label, ms = 0, rejects = false) => {
+  return () => new Promise((resolve, reject) => {
+    if (ms > 0) {
+      setTimeout(() => {
+        console.log(label)
         if (rejects) {
-          reject()
+          reject(label)
+        } else {
+          resolve(label)
         }
-        resolve()
-      })
-    )
-  })
-}
-
-// _queue(0)
-// _queue(1).then(() => console.log('after task 1'))
-// _queue(2, true)
-// _queue(3)
-// console.log('queue 4 things')
-
-const queueTask = (prevCmd, task) => {
-  return prevCmd.then(() =>
-    // return a Promise,
-    // that starts after the previous task
-    //  (b/c of then()), ...
-    new Promise((resolve, reject) => {
-      // ... that queues work for the next event loop, ...
-      setImmediate(async () => {
-        // ... work which runs the task, ...
-        try {
-          const result = await task()
-          // ... and which resolves that Promise with
-          //  the task's result, ...
-          resolve(result)
-        } catch (error) {
-          // ... or rejects if the task fails.
-          reject(error)
+      }, ms)
+    } else {
+      setImmediate(() => {
+        console.log(label)
+        if (rejects) {
+          reject(label)
+        } else {
+          resolve(label)
         }
       })
-    })
-  )
-}
-
-const makeTask = (n, rejects = false) => () =>
-  new Promise((resolve, reject) => {
-    console.log(`Running: Task ${n}`)
-    if (rejects) {
-      reject(`Failed: Task${n}`)
     }
-    resolve()
   })
+}
 
-let prev = Promise.resolve()
-prev = queueTask(prev, makeTask(1))
-prev = queueTask(prev, makeTask(2))
-prev.then(() => console.log('then() after 2'))
-prev = queueTask(prev, makeTask(3))
-console.log('end sync code')
+t1 = makeTask('slow 1', 1000)
+t2 = makeTask('slow 2', 1000)
+t3 = makeTask('fast')
+console.log('made.')
+
+const q1 = new Queue()
+const q2 = new Queue()
+q1.pushTask(t1)
+q1.pushTask(t2)
+q2.pushTask(t3)
+console.log('started.')

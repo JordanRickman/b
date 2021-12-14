@@ -59,6 +59,225 @@ describe('b.with', () => {
       'command string'
     )
   })
+  it('merges environment variables', async () => {
+    await b.with({ env: { var1: 'val1' } })
+           .with({ env: { var2: 'val2' } })`command string`
+    expect(runCommandWithOpts).toHaveBeenCalledWith(
+      {
+        env: { var1: 'val1', var2: 'val2' },
+        globalOpt1: 'one', globalOpt2: 'two'
+      },
+      'command string'
+    )
+  })
+})
+
+const makeTask = (tasks, statuses, label, ms = 0, rejects = false) => {
+  const task = () => new Promise((resolve, reject) => {
+    if (ms > 0) {
+      setTimeout(() => {
+        statuses[label] = true
+        if (rejects) {
+          reject(label)
+        } else {
+          resolve(label)
+        }
+      }, ms)
+    } else {
+      setImmediate(() => {
+        statuses[label] = true
+        if (rejects) {
+          reject(label)
+        } else {
+          resolve(label)
+        }
+      })
+    }
+  })
+  statuses[label] = false
+  tasks[label] = task
+}
+
+const mockWithTasks = tasks => {
+  runCommandWithOpts.mockImplementation((opts, commandString) => {
+    return tasks[commandString]()
+  })
+}
+
+describe('b.fork', () => {
+  beforeAll(() => {
+    jest.useFakeTimers('modern')
+  })
+  afterAll(() => {
+    jest.resetAllMocks()
+    jest.useRealTimers()
+  })
+  it('runs a single command in a separate queue', async () => {
+    const tasks = {}
+    const tasksDone = {}
+    makeTask(tasks, tasksDone, 'slow task', 1000)
+    makeTask(tasks, tasksDone, 'fast task')
+    mockWithTasks(tasks)
+
+    b.fork`slow task`
+    await b`fast task`
+    expect(tasksDone['fast task']).toBe(true)
+    expect(tasksDone['slow task']).toBe(false)
+
+    jest.advanceTimersByTime(1000)
+    expect(tasksDone['fast task']).toBe(true)
+    expect(tasksDone['slow task']).toBe(true)
+  })
+  it('creates a new instance with a separate queue', async () => {
+    const tasks = {}
+    const tasksDone = {}
+    makeTask(tasks, tasksDone, 'slow 1', 1000)
+    makeTask(tasks, tasksDone, 'slow 2', 1000)
+    makeTask(tasks, tasksDone, 'fast')
+    mockWithTasks(tasks)
+
+    forked = b.fork()
+    const slow1 = forked`slow 1`
+    const slow2 = forked`slow 2`
+    await b`fast`
+    
+    expect(tasksDone).toEqual({
+      'slow 1': false,
+      'slow 2': false,
+      fast: true
+    })
+
+    jest.advanceTimersByTime(1000)
+    expect(tasksDone).toEqual({
+      'slow 1': true,
+      'slow 2': false,
+      fast: true
+    })
+
+    /* Seems like we shouldn't have to do this, but waiting for slow1 to resolve,
+     *  and THEN calling jest.runAllImmediates(), was the only way I could
+     *  get it to advance the queue (chainTask() uses setImmediate()).
+     */
+    await slow1
+    jest.runAllImmediates()
+
+    jest.advanceTimersByTime(1000)
+    expect(tasksDone).toEqual({
+      'slow 1': true,
+      'slow 2': true,
+      fast: true
+    })
+  })
+  it('passes the forked instance to a callback if given one', async () => {
+    const tasks = {}
+    const tasksDone = {}
+    makeTask(tasks, tasksDone, 'slow 1', 1000)
+    makeTask(tasks, tasksDone, 'slow 2', 1000)
+    makeTask(tasks, tasksDone, 'slow 3', 1000)
+    makeTask(tasks, tasksDone, 'fast')
+    mockWithTasks(tasks)
+    
+    let slow1, slow2
+    b.fork(b_ => {
+      slow1 = b_`slow 1`
+      slow2 = b_`slow 2`
+      b_`slow 3`
+    })
+    expect(slow1).toBeDefined()
+    expect(slow2).toBeDefined()
+    await b`fast`
+
+    expect(tasksDone).toEqual({
+      'slow 1': false,
+      'slow 2': false,
+      'slow 3': false,
+      fast: true
+    })
+
+    jest.advanceTimersByTime(1000)
+    expect(tasksDone).toEqual({
+      'slow 1': true,
+      'slow 2': false,
+      'slow 3': false,
+      fast: true
+    })
+
+    await slow1
+    jest.runAllImmediates()
+
+    jest.advanceTimersByTime(1000)
+    expect(tasksDone).toEqual({
+      'slow 1': true,
+      'slow 2': true,
+      'slow 3': false,
+      fast: true
+    })
+
+    await slow2
+    jest.runAllImmediates()
+
+    jest.advanceTimersByTime(1000)
+    expect(tasksDone).toEqual({
+      'slow 1': true,
+      'slow 2': true,
+      'slow 3': true,
+      fast: true
+    })
+  })
+  describe('b.fork.waitAll', () => {
+    it('waits for only the forked queue', async () => {
+      const tasks = {}
+      const tasksDone = {}
+      makeTask(tasks, tasksDone, 'fast 1')
+      makeTask(tasks, tasksDone, 'fast 2')
+      makeTask(tasks, tasksDone, 'slow', 1000)
+      mockWithTasks(tasks)
+
+      const forked = b.fork()
+      forked`fast 1`
+      forked`fast 2`
+      b`slow`
+
+      await forked.waitAll()
+
+      expect(tasksDone).toEqual({
+        'fast 1': true,
+        'fast 2': true,
+        slow: false
+      })
+    })
+  })
+})
+
+describe('b.waitAll', () => {
+  beforeAll(() => {
+    jest.useFakeTimers('modern')
+  })
+  afterAll(() => {
+    jest.resetAllMocks()
+    jest.useRealTimers()
+  })
+  it('waits for all commands to finish', async () => {
+    const tasks = {}
+    const tasksDone = {}
+    makeTask(tasks, tasksDone, 'one')
+    makeTask(tasks, tasksDone, 'two')
+    makeTask(tasks, tasksDone, 'three')
+    mockWithTasks(tasks)
+
+    b`one`
+    b`two`
+    b`three`
+
+    expect(tasksDone).toEqual({
+      one: false, two: false, three: false
+    })
+    jest.runAllTimers()
+    await b.waitAll()
+    expect(tasksDone).toEqual({
+      one: true, two: true, three: true
+    })
+  })
 })
 
 describe('_interpolate', () => {
