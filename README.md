@@ -22,8 +22,16 @@ const runTestSuite = (env, noCoverage) => {
   <summary>Table of Contents</summary>
 
 <!-- toc -->
+
+  - [Contents](#contents)
   - [Get it](#get-it)
+- [Async, but Sequential](#async-but-sequential)
   - [Parallelization](#parallelization)
+- [Exception Handling](#exception-handling)
+- [Return Signature](#return-signature)
+- [Template Parsing](#template-parsing)
+- [Stdio](#stdio)
+- [Options](#options)
   - [Set current working directory](#set-current-working-directory)
   - [Set environment variables](#set-environment-variables)
   - [Don't raise an exception on failure](#dont-raise-an-exception-on-failure)
@@ -31,7 +39,9 @@ const runTestSuite = (env, noCoverage) => {
   - [Run a process in the background](#run-a-process-in-the-background)
   - [Set user or group of the child process](#set-user-or-group-of-the-child-process)
   - [Timeout process after _n_ milliseconds](#timeout-process-after-n-milliseconds)
+- [When _not_ to Use **b**](#when-not-to-use-b)
   - [Security](#security)
+
 <!-- tocstop -->
 </details>
 
@@ -41,8 +51,8 @@ npm i @jordanrickman/b
 ```
 
 
-Async, but Sequential
----
+## Async, but Sequential
+
 **b** wouldn't be much fun if you had to write this:
 ```javascript
 await b`my first command`
@@ -82,6 +92,7 @@ const matches = readFileSync('matched.txt', 'utf8')
 Or, you can use `b.waitAll()`, whose promise resolves once `b`'s queue has finished.
 
 ### Parallelization
+
 If you need to, you can run things in parallel instead of sequentially with `b.fork`, which "forks" off a new queue of `b` commands.
 
 ```javascript
@@ -114,8 +125,8 @@ await parallelTask.waitAll()
 You can also use `b.bg` to start a command that will keep running after your JS code exits.
 
 
-Exception Handling
----
+## Exception Handling
+
 Also, unlike `spawnSync()` and other `child_process` APIs, which just set the `error` attribute, **b** raises an exception when a process fails to spawn.
 
 By default, **b** also raises an exception if a shell command produces a non-zero exit code. This can be relaxed with `b.mayfail`.
@@ -123,8 +134,8 @@ By default, **b** also raises an exception if a shell command produces a non-zer
 When trying to catch these, keep in mind they will come in as Promise rejections; a call to `b` will not itself throw any of these (unless `await`ed).
 
 
-Return Signature
----
+## Return Signature
+
 `b`'s Promise resolves with the same object structure as that returned by `child_process.spawnSync()`, except that it converts the I/O from Buffers into Strings. The specific type signature is
 ```typescript
 {
@@ -139,8 +150,8 @@ Return Signature
 ```
 
 
-Template Parsing
----
+## Template Parsing
+
 `b` applies some smart processing to your template literals. To see all the possibilities, look in `test/b.test.js`, at the test cases for the `_interpolate` function. Some highlights include:
 
 * Strings are wrapped in double quotes.
@@ -181,8 +192,8 @@ b`echo uploaded contents: ${async () => docServer.get('/document/'+docId)}`
 ```
 
 
-Stdio
----
+## Stdio
+
 Because **b** was written to help with scripting / automation, it prints stdout and stderr by default, piping them to the stdout/stderr of the parent process. It also pipes the parent process stdin to the child stdin, allowing you to run interactive commands.
 
 You can override this behavior with `b.quiet` and `b.silent`
@@ -192,8 +203,8 @@ b.silent`echo "Don't show this error" >&2` // stdout AND stderr are ignored
 ```
 
 
-Options
----
+## Options
+
 You can configure **b** behavior with various options. All options can be set in a few different ways.
 ```javascript
 // Apply one option to a single command
@@ -278,8 +289,8 @@ b.with({ timeout: n })`command string`
 After the timeout, we attempt to kill the process using `SIGTERM`. This may not work (the process may catch it).
 
 
-When _not_ to Use **b**
----
+## When _not_ to Use **b**
+
 I hope primarily to give you a new possibility for flexible, JavaScript-based task automation.
 
 I am not a systems programmer, or an inter-process communication expert. You shouldn't use **b** to manage subprocesses in production code, and you probably shouldn't use it in things like production build chains, where you need a guarantee that certain commands were run with certain exact arguments.
