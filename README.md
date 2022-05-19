@@ -146,6 +146,12 @@ When trying to catch these, keep in mind they will come in as Promise rejections
 }
 ```
 
+As it is so common, there is a convenience method `b.stdoutof` that just gets the stdout of a command. _Unlike most other **b** methods (see [Options](#options)), this will have a different return signature, so you will lose access to all other return values. Use when you need a command's output, and nothing else._
+
+```javascript
+const result = await b.stdoutof`echo Hello`
+console.log(result) // Hello
+```
 
 ## Template Parsing
 

@@ -1,5 +1,11 @@
 const b = require('./index')
 
-b.echo`echo Hello,`
-b.echo`read x; export x`
-b.echo`echo $x`
+async function stdoutof() {
+  const result = await b.stdoutof`echo Hello`;
+  console.log(result);
+
+  const captureOnly = await b.with({ quiet: true }).stdoutof`echo CaptureOnly`;
+  console.log(captureOnly)
+}
+
+stdoutof()
