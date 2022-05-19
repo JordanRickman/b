@@ -18,9 +18,6 @@ const runTestSuite = (env, noCoverage) => {
 `b` gives you all the expressive power of Bash one-liners, right in your JavaScript code!
 
 ### Contents
-<details>
-  <summary>Table of Contents</summary>
-
 <!-- toc -->
 
   - [Contents](#contents)
@@ -44,7 +41,6 @@ const runTestSuite = (env, noCoverage) => {
   - [Security](#security)
 
 <!-- tocstop -->
-</details>
 
 ### Get it
 ```
