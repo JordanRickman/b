@@ -35,6 +35,7 @@ const runTestSuite = (env, noCoverage) => {
   - [Set current working directory](#set-current-working-directory)
   - [Set environment variables](#set-environment-variables)
   - [Don't raise an exception on failure](#dont-raise-an-exception-on-failure)
+  - [Echo command input](#echo-command-input)
   - [Suppress command output](#suppress-command-output)
   - [Run a process in the background](#run-a-process-in-the-background)
   - [Set user or group of the child process](#set-user-or-group-of-the-child-process)
@@ -202,6 +203,15 @@ b.quiet`cat averylongfile.txt` // stdout is ignored
 b.silent`echo "Don't show this error" >&2` // stdout AND stderr are ignored
 ```
 
+For extra readability, if you use `b.echo` (or `b.with({ echo: true })`), **b** will print each command string before it runs them.
+
+```javascript
+b.echo`echo "Hello, World!"`
+// echo "Hello, World!"
+// Hello, World!
+```
+
+Be careful when echoing commands that might contain passwords or other sensitive data. Obfuscation of data in `echo` might be a feature in the future, but is not supported right now.
 
 ## Options
 
@@ -258,11 +268,18 @@ b.with({ mayfail: true })`command string`
 ```
 Default behavior is to raise an exception (Promise rejection) either on a non-zero exit code, or if the child process is terminated by a signal (e.g. Ctrl-C / `SIGINT`). Setting this flag to true disables both cases. Errors will still be raised if the child process fails to start.
 
+### Echo command input
+```javascript
+b.echo`command string`
+b.with({ echo: true })
+```
+Print each command string to stdout before executing.
+
 ### Suppress command output
 ```javascript
 b.quiet`command string` // Don't echo stdout
 b.silent`command string` // Don't echo stderr OR stdout
-b.with({ quiet: true, silent: true })
+b.with({ quiet: true, silent: true }) // (redundant; silent implies quiet)
 ```
 Default behavior is to pipe `stdout` and `stderr` from the child process to the parent process, meaning the parent will emit these as the child does (and on the same channels). These flags prevent that. You can still access the `stdout` and `stderr` attributes in the Promise result.
 

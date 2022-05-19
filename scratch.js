@@ -1,5 +1,5 @@
 const b = require('./index')
 
-b`echo Hello,`
-b`read x; export x`
-b`echo $x`
+b.echo`echo Hello,`
+b.echo`read x; export x`
+b.echo`echo $x`
