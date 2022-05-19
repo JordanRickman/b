@@ -203,7 +203,7 @@ b.quiet`cat averylongfile.txt` // stdout is ignored
 b.silent`echo "Don't show this error" >&2` // stdout AND stderr are ignored
 ```
 
-For extra readability, if you use `b.echo` (or `b.with({ echo: true })`), **b** will print each command string before it runs them.
+For extra information, if you use `b.echo` (or `b.with({ echo: true })`), **b** will print each command string before it runs them.
 
 ```javascript
 b.echo`echo "Hello, World!"`
