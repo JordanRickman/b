@@ -17,6 +17,24 @@ const runTestSuite = (env, noCoverage) => {
 ```
 `b` gives you all the expressive power of Bash one-liners, right in your JavaScript code!
 
+### Contents
+<details>
+  <summary>Table of Contents</summary>
+
+<!-- toc -->
+  - [Get it](#get-it)
+  - [Parallelization](#parallelization)
+  - [Set current working directory](#set-current-working-directory)
+  - [Set environment variables](#set-environment-variables)
+  - [Don't raise an exception on failure](#dont-raise-an-exception-on-failure)
+  - [Suppress command output](#suppress-command-output)
+  - [Run a process in the background](#run-a-process-in-the-background)
+  - [Set user or group of the child process](#set-user-or-group-of-the-child-process)
+  - [Timeout process after _n_ milliseconds](#timeout-process-after-n-milliseconds)
+  - [Security](#security)
+<!-- tocstop -->
+</details>
+
 ### Get it
 ```
 npm i @jordanrickman/b
