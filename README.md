@@ -262,6 +262,7 @@ b.with({ cd: '/path/to/directory' })`command string`
 b.env({ VARIABLE_NAME: 'value' })`command string`
 b.with({ env: { VARIABLE_NAME: 'value' }})`command string`
 ```
+Note that the environment of the parent process is automatically inherited - this is necessary to, for instance, retain the same `PATH`. If you want to ensure an environment variable is _not_ set, try setting it to `null` (NOT `undefined`).
 
 ### Don't raise an exception on failure
 ```javascript
