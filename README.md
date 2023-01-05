@@ -47,6 +47,13 @@ const runTestSuite = (env, noCoverage) => {
 npm i @jordanrickman/b
 ```
 
+The module exports a single function.
+```javascript
+const b = require('@jordanrickman/b')
+// Or, using ESM syntax
+import * as b from '@jordanrickman/b'
+```
+
 
 ## Async, but Sequential
 
