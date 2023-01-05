@@ -2,6 +2,7 @@
   "name": "@jordanrickman/b",
   "version": "0.4.1",
   "entryPoint": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "jest",
     "test-no-cov": "jest --coverage=false"
