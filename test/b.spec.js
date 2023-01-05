@@ -85,7 +85,6 @@ const makeTask = (tasks, statuses, label, ms = 0, rejects = false) => {
       }, ms)
     } else {
       setImmediate(() => {
-        // console.log(`doing immediate task '${label}'`)
         statuses[label] = true
         if (rejects) {
           reject(label)
@@ -113,6 +112,10 @@ describe('b.fork', () => {
   })
   afterAll(() => {
     jest.resetAllMocks()
+    // If we don't clear the task queue before doing useRealTimers(),
+    //  we'll be left with promises that never resolve, and later test
+    //  suites will fail.
+    jest.runAllTimers()
     jest.useRealTimers()
   })
   it('runs a single command in a separate queue', async () => {
@@ -249,14 +252,8 @@ describe('b.fork', () => {
 })
 
 describe('b.waitAll', () => {
-  beforeAll(() => {
-    // jest.useFakeTimers({
-    //   advanceTimers: true
-    // })
-  })
   afterAll(() => {
     jest.resetAllMocks()
-    // jest.useRealTimers()
   })
   it('waits for all commands to finish', async () => {
     const tasks = {}
@@ -273,7 +270,6 @@ describe('b.waitAll', () => {
     expect(tasksDone).toEqual({
       one: false, two: false, three: false
     })
-    // for (let i = 0; i < 3; i++) { jest.runAllTimers() }
     await b.waitAll()
     expect(tasksDone).toEqual({
       one: true, two: true, three: true
