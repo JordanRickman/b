@@ -85,6 +85,7 @@ const makeTask = (tasks, statuses, label, ms = 0, rejects = false) => {
       }, ms)
     } else {
       setImmediate(() => {
+        // console.log(`doing immediate task '${label}'`)
         statuses[label] = true
         if (rejects) {
           reject(label)
@@ -106,7 +107,9 @@ const mockWithTasks = tasks => {
 
 describe('b.fork', () => {
   beforeAll(() => {
-    jest.useFakeTimers('modern')
+    jest.useFakeTimers({
+      advanceTimers: true
+    })
   })
   afterAll(() => {
     jest.resetAllMocks()
@@ -138,7 +141,7 @@ describe('b.fork', () => {
 
     forked = b.fork()
     const slow1 = forked`slow 1`
-    const slow2 = forked`slow 2`
+    forked`slow 2`
     await b`fast`
     
     expect(tasksDone).toEqual({
@@ -154,12 +157,12 @@ describe('b.fork', () => {
       fast: true
     })
 
-    /* Seems like we shouldn't have to do this, but waiting for slow1 to resolve,
-     *  and THEN calling jest.runAllImmediates(), was the only way I could
-     *  get it to advance the queue (chainTask() uses setImmediate()).
-     */
+    /* Task chaining works by calling setImmediate() on the next task,
+     * before resolving the current task's Promise. So, aAlthough the actual
+     * function for slow1 has executed after doing jest.advanceTimersByTime(1000),
+     * we still need to wait for the Promise to resolve, in order to let b
+     * execute that task-chaining code. */
     await slow1
-    jest.runAllImmediates()
 
     jest.advanceTimersByTime(1000)
     expect(tasksDone).toEqual({
@@ -201,9 +204,7 @@ describe('b.fork', () => {
       'slow 3': false,
       fast: true
     })
-
     await slow1
-    jest.runAllImmediates()
 
     jest.advanceTimersByTime(1000)
     expect(tasksDone).toEqual({
@@ -212,9 +213,7 @@ describe('b.fork', () => {
       'slow 3': false,
       fast: true
     })
-
     await slow2
-    jest.runAllImmediates()
 
     jest.advanceTimersByTime(1000)
     expect(tasksDone).toEqual({
@@ -251,11 +250,13 @@ describe('b.fork', () => {
 
 describe('b.waitAll', () => {
   beforeAll(() => {
-    jest.useFakeTimers('modern')
+    // jest.useFakeTimers({
+    //   advanceTimers: true
+    // })
   })
   afterAll(() => {
     jest.resetAllMocks()
-    jest.useRealTimers()
+    // jest.useRealTimers()
   })
   it('waits for all commands to finish', async () => {
     const tasks = {}
@@ -272,7 +273,7 @@ describe('b.waitAll', () => {
     expect(tasksDone).toEqual({
       one: false, two: false, three: false
     })
-    jest.runAllTimers()
+    // for (let i = 0; i < 3; i++) { jest.runAllTimers() }
     await b.waitAll()
     expect(tasksDone).toEqual({
       one: true, two: true, three: true

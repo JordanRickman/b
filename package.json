@@ -7,7 +7,7 @@
     "test-no-cov": "jest --coverage=false"
   },
   "devDependencies": {
-    "jest": "^27.4.3"
+    "jest": "^29.3.1"
   },
   "dependencies": {
     "cross-spawn": "^7.0.3",
