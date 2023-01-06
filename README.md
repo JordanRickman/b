@@ -147,9 +147,9 @@ When trying to catch these, keep in mind they will come in as Promise rejections
   output: [string, string, string]; // [stdin, stdout, stderr]
   stdout: string; // Identical to output[1]
   stderr: string; // Identical to output[2]
-  status: number | null; // Exit code, or null if the process was terminated by a signal
-  signal: string | null; // If it was terminated by a signal, the signal used to terminate the process
-  error: Error; // The error object if the child process failed or timed out
+  status?: number; // Exit code, or undefined if the process was terminated by a signal
+  signal?: string; // If it was terminated by a signal, the signal used to terminate the process
+  error?: Error; // The error object if the child process failed or timed out
 }
 ```
 

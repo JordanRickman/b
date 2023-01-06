@@ -20,7 +20,7 @@ interface BResult {
   stderr: string;
   status: number | null;
   signal: string | null;
-  error: Error;
+  error?: BShellError;
 }
 
 
@@ -51,4 +51,10 @@ declare class _SpecialInterpolate {}
 declare const b: BInstance & {
   raw(s: string): _SpecialInterpolate;
   squote(s: string): _SpecialInterpolate;
+}
+
+declare class BShellError extends Error {
+  name: 'BShellError';
+  result: BResult;
+  command: string;
 }
