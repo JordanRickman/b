@@ -1,6 +1,6 @@
 {
   "name": "@jordanrickman/b",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "entryPoint": "index.js",
   "types": "index.d.ts",
   "scripts": {
