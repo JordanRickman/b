@@ -294,6 +294,8 @@ b.with({ quiet: true, silent: true }) // (redundant; silent implies quiet)
 Default behavior is to pipe `stdout` and `stderr` from the child process to the parent process, meaning the parent will emit these as the child does (and on the same channels). These flags prevent that. You can still access the `stdout` and `stderr` attributes in the Promise result.
 
 ### Run a process in the background
+> ***WARNING!*** <br/>
+> This currently has some bugs, and will leave **b** in a bad state, so don't use it.
 ```javascript
 b.bg`long-running command`
 b.with({ bg: true })`long-running command`
