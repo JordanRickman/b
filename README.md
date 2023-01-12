@@ -295,7 +295,7 @@ Default behavior is to pipe `stdout` and `stderr` from the child process to the 
 
 ### Run a process in the background
 > ***WARNING!*** <br/>
-> This currently has some bugs, and will leave **b** in a bad state, so don't use it.
+> This feature doesn't actually work right now.
 ```javascript
 b.bg`long-running command`
 b.with({ bg: true })`long-running command`
