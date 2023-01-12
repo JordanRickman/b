@@ -27,23 +27,37 @@ interface BResult {
 type BInstance = ((strings: TemplateStringsArray, ...interpolations: any[]) => BResult) &
 {
   with(opts: BOpts, callback?: (b: BInstance) => void): BInstance;
+  
   fork(strings: TemplateStringsArray, ...interpolations: any[]): BResult;
   fork(callback: (forkedInstance: BInstance) => void): BInstance;
   fork(): BInstance;
+
+  waitAll(): Promise<void>
+  
+  stdoutof(strings: TemplateStringsArray, ...interpolations: any[]): string;
+
   cd(path: string): BInstance;
   env(environment: { [variableName: string]: string }): BInstance;
-  mayfail(strings: TemplateStringsArray, ...interpolations: any[]): BResult;
-  bg(strings: TemplateStringsArray, ...interpolations: any[]): BResult;
   user(username: string): BInstance;
   group(groupname: string): BInstance;
   uid(userid: number): BInstance;
   gid(groupid: number): BInstance;
   timeout(ms: number): BInstance;
+
+  mayfail(strings: TemplateStringsArray, ...interpolations: any[]): BResult;
+  mayfail: BInstance;
+
   quiet(strings: TemplateStringsArray, ...interpolations: any[]): BResult;
+  quiet: BInstance;
+
   silent(strings: TemplateStringsArray, ...interpolations: any[]): BResult;
+  silent: BInstance;
+
   echo(strings: TemplateStringsArray, ...interpolations: any[]): BResult;
-  stdoutof(strings: TemplateStringsArray, ...interpolations: any[]): string;
-  waitAll(): Promise<void>
+  echo: BInstance;
+
+  bg(strings: TemplateStringsArray, ...interpolations: any[]): BResult;
+  bg: BInstance;
 }
 
 declare class _SpecialInterpolate {}
